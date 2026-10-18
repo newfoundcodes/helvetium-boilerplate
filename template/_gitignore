@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.test
+storage/*.sqlite3
+storage/*.sqlite3-*
+public/assets/client.js
+public/assets/client.js.map
+.DS_Store
