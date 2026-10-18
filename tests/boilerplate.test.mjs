@@ -187,10 +187,13 @@ test('15 browser entry does not import the server composition module', async () 
 test('16 server configures static serving and serve()', async () => {
   const { base, target } = await generated();
   const server = await readFile(join(target, 'server.ts'), 'utf8');
+  const paths = await readFile(join(target, 'src/routes/paths.ts'), 'utf8');
 
   assert.match(server, /serveStatic/);
   assert.match(server, /const handle = serve/);
   assert.match(server, /SIGTERM/);
+  assert.match(paths, /HelvetiumRouteDefinition/);
+  assert.match(paths, /serverPageRoutes/);
 
   await rm(base, { recursive: true, force: true });
 });
