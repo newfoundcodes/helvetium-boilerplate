@@ -1,0 +1,7 @@
+NODE_ENV=test
+HOST=127.0.0.1
+PORT=0
+APP_ORIGIN=http://127.0.0.1
+DATABASE_PATH=:memory:
+LOG_LEVEL=silent
+TRUST_PROXY=false
