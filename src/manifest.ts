@@ -30,7 +30,7 @@ export const manifest: BoilerplateManifest = Object.freeze({
   framework: {
     boot: '0.1.2',
     dom: '0.1.2',
-    alps: '0.1.0',
+    alps: '0.1.1',
     apiary: '0.1.1',
     mcp: '0.1.1',
   },

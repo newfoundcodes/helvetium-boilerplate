@@ -36,7 +36,7 @@ test('04 manifest pins the coordinated Helvetium releases', () =>
   assert.deepEqual(manifest.framework, {
     boot: '0.1.2',
     dom: '0.1.2',
-    alps: '0.1.0',
+    alps: '0.1.1',
     apiary: '0.1.1',
     mcp: '0.1.1',
   }));
