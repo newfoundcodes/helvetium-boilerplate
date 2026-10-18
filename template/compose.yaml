@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    ports:
+      - '__PORT__:__PORT__'
+    volumes:
+      - app-data:/app/storage
+    restart: unless-stopped
+volumes:
+  app-data:
