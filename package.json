@@ -1,0 +1,66 @@
+{
+  "name": "@newfoundcodes/helvetium-boilerplate",
+  "version": "0.1.0",
+  "description": "Production-ready full-stack Helvetium project boilerplate and programmatic initializer for Helvetium Boot, Helvetium DOM, and Helvetium Alps.",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./manifest": {
+      "types": "./dist/manifest.d.ts",
+      "import": "./dist/manifest.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "helvetium-boilerplate": "./bin/helvetium-boilerplate.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "template",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "clean": "rm -rf dist coverage site",
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "coverage": "npm run build && node --experimental-test-coverage --test tests/*.test.mjs",
+    "docs:build": "node ./scripts/docs.mjs build",
+    "docs:serve": "node ./scripts/docs.mjs serve",
+    "prepublishOnly": "npm run typecheck && npm test",
+    "docs:setup": "node ./scripts/docs.mjs setup"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/node": "^22.20.1",
+    "eslint": "^10.10.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.69.0"
+  },
+  "keywords": [
+    "helvetium",
+    "boilerplate",
+    "scaffold",
+    "typescript",
+    "full-stack",
+    "helvetium-boot",
+    "helvetium-dom",
+    "helvetium-alps"
+  ]
+}
