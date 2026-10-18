@@ -1,0 +1,33 @@
+{
+  "name": "__PACKAGE_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "clean": "rm -rf dist public/assets/*.js public/assets/*.js.map public/assets/app.css public/assets/manifest.json coverage",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:css": "tailwindcss -i ./src/app.css -o ./public/assets/app.css --minify",
+    "build:web": "npm run build:css && node scripts/build-web.mjs",
+    "build": "npm run clean && npm run build:server && npm run build:web",
+    "dev": "node scripts/dev.mjs",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    __ALPS_SCRIPTS__
+    "test": "node --test --import tsx tests/*.test.ts",
+    "test:coverage": "node --experimental-test-coverage --test --import tsx tests/*.test.ts",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    __DEPENDENCIES__
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "esbuild": "^0.28.2",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.0"
+  }
+}
