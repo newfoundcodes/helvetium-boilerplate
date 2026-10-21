@@ -17,3 +17,4 @@ jobs:
             npm run migrate
           fi
       - run: npm run check
+__PLAYWRIGHT_CI__
