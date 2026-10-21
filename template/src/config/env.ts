@@ -10,6 +10,7 @@ export interface Environment {
   DATABASE_PATH: string;
   LOG_LEVEL: 'silent' | 'debug' | 'info' | 'warn' | 'error';
   TRUST_PROXY: boolean;
+  APIARY_ADMIN_TOKEN?: string;
 }
 
 const loaded = new Set<string>();
@@ -73,6 +74,7 @@ export function loadEnvironment(cwd = process.cwd()): Environment {
     DATABASE_PATH: merged.DATABASE_PATH ?? './storage/app.sqlite3',
     LOG_LEVEL: (merged.LOG_LEVEL ?? 'info') as Environment['LOG_LEVEL'],
     TRUST_PROXY: bool(merged.TRUST_PROXY),
+    APIARY_ADMIN_TOKEN: merged.APIARY_ADMIN_TOKEN,
   });
 }
 
