@@ -2,5 +2,9 @@ node_modules
 dist
 coverage
 .git
-.env
-storage/*.sqlite3*
+.env*
+!.env.example
+storage
+var
+*.log
+.DS_Store
