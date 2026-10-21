@@ -35,6 +35,9 @@ export interface CreateProjectOptions {
   useAlps?: boolean;
   useApiary?: boolean;
   useMcp?: boolean;
+  usePlaywright?: boolean;
+  usePrettier?: boolean;
+  useEslint?: boolean;
 }
 
 export interface ProjectPlan {
@@ -46,6 +49,9 @@ export interface ProjectPlan {
   useAlps: boolean;
   useApiary: boolean;
   useMcp: boolean;
+  usePlaywright: boolean;
+  usePrettier: boolean;
+  useEslint: boolean;
 }
 
 export interface CreateProjectResult extends ProjectPlan {
