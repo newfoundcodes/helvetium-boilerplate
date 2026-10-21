@@ -1,6 +1,6 @@
 {
   "name": "@newfoundcodes/helvetium-boilerplate",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Production-ready full-stack Helvetium project boilerplate and programmatic initializer for Helvetium Boot, Helvetium DOM, and Helvetium Alps.",
   "type": "module",
   "license": "AGPL-3.0-only",
