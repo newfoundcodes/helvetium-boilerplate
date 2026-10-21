@@ -104,6 +104,180 @@ test('10 template also contains production support files', async () => {
   }
 });
 
+test('10a generated TSX uses the automatic Helvetium DOM JSX runtime', async () => {
+  const { base, target } = await generated();
+  const tsconfig = JSON.parse(await readFile(join(target, 'tsconfig.json'), 'utf8'));
+  const component = await readFile(join(target, 'src/app/HomePage.tsx'), 'utf8');
+  const buildWeb = await readFile(join(target, 'scripts/build-web.mjs'), 'utf8');
+
+  assert.equal(tsconfig.compilerOptions.jsx, 'react-jsx');
+  assert.equal(tsconfig.compilerOptions.jsxImportSource, '@newfoundcodes/helvetium-dom');
+  assert.doesNotMatch(component, /import .*\b(?:h|Fragment)\b/);
+  assert.match(buildWeb, /jsx: ['"]automatic['"]/);
+  assert.match(buildWeb, /jsxImportSource: ['"]@newfoundcodes\/helvetium-dom['"]/);
+  assert.match(
+    await readFile(join(target, 'package.json'), 'utf8'),
+    /"clean": "node scripts\/clean\.mjs"/,
+  );
+  assert.ok((await templateFiles()).includes('scripts/clean.mjs'));
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10b generated test command includes TypeScript and TSX tests', async () => {
+  const { base, target } = await generated();
+  const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
+  const runner = await readFile(join(target, 'scripts/test.mjs'), 'utf8');
+
+  assert.equal(pkg.scripts.test, 'node scripts/test.mjs');
+  assert.match(runner, /testPattern/);
+  assert.match(runner, /tsx/);
+  assert.match(runner, /spawn\(process\.execPath/);
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10c generated Apiary runtime supports online and offline workers', async () => {
+  const { base, target } = await generated();
+  const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
+  const background = await readFile(join(target, 'background/index.ts'), 'utf8');
+  const server = await readFile(join(target, 'server.ts'), 'utf8');
+  const workerScript = await readFile(join(target, 'scripts/workers.mjs'), 'utf8');
+
+  assert.equal(pkg.scripts.workers, 'node --import tsx scripts/workers.mjs');
+  assert.match(background, /FileQueueStore/);
+  assert.match(background, /createApiaryDaemon/);
+  assert.match(server, /mountApiary\(app, '\/internal\/apiary'/);
+  assert.match(server, /startWorkers/);
+  assert.match(workerScript, /workerDefinitions/);
+  assert.match(workerScript, /remoteJson\('\/jobs'/);
+  assert.match(workerScript, /new Worker/);
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10d generated Docker image builds production assets and preserves worker state', async () => {
+  const { base, target } = await generated();
+  const dockerfile = await readFile(join(target, 'Dockerfile'), 'utf8');
+  const dockerignore = await readFile(join(target, '.dockerignore'), 'utf8');
+  const compose = await readFile(join(target, 'compose.yaml'), 'utf8');
+
+  assert.match(dockerfile, /node:24-bookworm-slim AS build/);
+  assert.match(dockerfile, /apt-get install .*python3 make g\+\+/s);
+  assert.match(dockerfile, /RUN npm run build/);
+  assert.doesNotMatch(dockerfile, /RUN npm run check/);
+  assert.match(dockerfile, /RUN npm prune --omit=dev/);
+  assert.match(dockerfile, /COPY --from=build \/app\/node_modules \.\/node_modules/);
+  assert.match(dockerfile, /mkdir -p \/app\/storage \/app\/var/);
+  assert.match(dockerignore, /\.env\*/);
+  assert.match(dockerignore, /!\.env\.example/);
+  assert.match(compose, /apiary-data:\/app\/var/);
+  assert.match(compose, /apiary-data:/);
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('optional Apiary output does not add an unused Compose volume', async () => {
+  const { base, target } = await generated({ useApiary: false });
+  const compose = await readFile(join(target, 'compose.yaml'), 'utf8');
+
+  assert.doesNotMatch(compose, /apiary-data/);
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10e generated Playwright output is opt-in and wired into CI', async () => {
+  const { base, target } = await generated({ usePlaywright: true });
+  const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
+  const config = await readFile(join(target, 'playwright.config.ts'), 'utf8');
+  const workflow = await readFile(join(target, '.github/workflows/ci.yml'), 'utf8');
+  const readme = await readFile(join(target, 'README.md'), 'utf8');
+
+  assert.equal(pkg.devDependencies['@playwright/test'], '^1.55.0');
+  assert.equal(pkg.scripts['test:e2e'], 'npm run build && playwright test');
+  assert.match(config, /testDir: ['"]\.\/e2e['"]/);
+  assert.match(config, /npm start/);
+  assert.match(workflow, /playwright install --with-deps chromium/);
+  assert.match(workflow, /npm run test:e2e/);
+  assert.match(readme, /npx playwright install chromium/);
+  assert.ok(
+    (await readFile(join(target, 'e2e/home.spec.ts'), 'utf8')).includes("from '@playwright/test'"),
+  );
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10f generated Playwright output is omitted when disabled', async () => {
+  const { base, target } = await generated({ usePlaywright: false });
+  const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
+  const readme = await readFile(join(target, 'README.md'), 'utf8');
+
+  assert.equal(pkg.devDependencies['@playwright/test'], undefined);
+  assert.equal(pkg.scripts['test:e2e'], undefined);
+  assert.doesNotMatch(readme, /Playwright|test:e2e/);
+  await assert.rejects(() => readFile(join(target, 'playwright.config.ts')));
+  await assert.rejects(() => readFile(join(target, 'e2e/home.spec.ts')));
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10g generated formatting and linting are independently configurable', async () => {
+  const { base, target } = await generated({ usePrettier: true, useEslint: true });
+  const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
+  const eslint = await readFile(join(target, 'eslint.config.mjs'), 'utf8');
+  const prettier = await readFile(join(target, 'prettier.config.mjs'), 'utf8');
+
+  assert.equal(pkg.devDependencies.prettier, '^3.9.6');
+  assert.equal(pkg.devDependencies.eslint, '^10.10.0');
+  assert.equal(pkg.devDependencies['@stylistic/eslint-plugin'], '^5.10.0');
+  assert.equal(pkg.scripts.format, 'prettier --write .');
+  assert.equal(pkg.scripts['format:check'], 'prettier --check .');
+  assert.equal(pkg.scripts.lint, 'eslint .');
+  assert.equal(pkg.scripts['lint:fix'], 'eslint . --fix');
+  assert.match(pkg.scripts.check, /npm run format:check/);
+  assert.match(pkg.scripts.check, /npm run lint/);
+  assert.match(eslint, /@stylistic/);
+  assert.match(prettier, /printWidth: 100/);
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10h generated quality files can be disabled separately', async () => {
+  const { base, target } = await generated({ usePrettier: true, useEslint: false });
+  const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
+
+  assert.equal(pkg.devDependencies.prettier, '^3.9.6');
+  assert.equal(pkg.devDependencies.eslint, undefined);
+  assert.equal(pkg.scripts.format, 'prettier --write .');
+  assert.equal(pkg.scripts.lint, undefined);
+  await assert.rejects(() => readFile(join(target, 'eslint.config.mjs')));
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10i generated project includes Node.js types for TypeScript tooling', async () => {
+  const { base, target } = await generated();
+  const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
+
+  assert.equal(pkg.devDependencies['@types/node'], '^22.20.1');
+
+  await rm(base, { recursive: true, force: true });
+});
+
+test('10j disabled features do not leave orphan semicolon lines', async () => {
+  const { base, target } = await generated({
+    useAlps: false,
+    useApiary: false,
+    useMcp: false,
+  });
+  const server = await readFile(join(target, 'server.ts'), 'utf8');
+  const paths = await readFile(join(target, 'src/routes/paths.ts'), 'utf8');
+
+  assert.doesNotMatch(server, /^[ \t]*;[ \t]*$/m);
+  assert.doesNotMatch(paths, /^[ \t]*;[ \t]*$/m);
+
+  await rm(base, { recursive: true, force: true });
+});
+
 test('11 generated project renders name package and port tokens', async () => {
   const { base, target } = await generated({
     projectName: 'Example App',
