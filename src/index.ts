@@ -102,16 +102,16 @@ function render(value: string, plan: ProjectPlan): string {
   const dependencies: string[] = [
     ...(plan.useAlps
       ? [
-          `"@newfoundcodes/helvetium-alps": "^${manifest.framework.alps}"`,
+          `"@newfoundcodes/helvetium-alps": ">=${manifest.framework.alps}"`,
           '"better-sqlite3": "^13.0.3"',
         ]
       : []),
     ...(plan.useApiary
-      ? [`"@newfoundcodes/helvetium-apiary": "^${manifest.framework.apiary}"`]
+      ? [`"@newfoundcodes/helvetium-apiary": ">=${manifest.framework.apiary}"`]
       : []),
-    `"@newfoundcodes/helvetium-boot": "^${manifest.framework.boot}"`,
-    `"@newfoundcodes/helvetium-dom": "^${manifest.framework.dom}"`,
-    ...(plan.useMcp ? [`"@newfoundcodes/helvetium-mcp": "^${manifest.framework.mcp}"`] : []),
+    `"@newfoundcodes/helvetium-boot": ">=${manifest.framework.boot}"`,
+    `"@newfoundcodes/helvetium-dom": ">=${manifest.framework.dom}"`,
+    ...(plan.useMcp ? [`"@newfoundcodes/helvetium-mcp": ">=${manifest.framework.mcp}"`] : []),
   ];
 
   const migrationScripts = plan.useAlps
