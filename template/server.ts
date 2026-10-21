@@ -1,14 +1,14 @@
 import { serve, serveStatic } from '@newfoundcodes/helvetium-boot/node';
 import { createLogger } from './src/config/logger.js';
 import { loadEnvironment } from './src/config/env.js';
-__IMPORT_ALPS__;
-__IMPORT_APIARY__;
+__IMPORT_ALPS__
+__IMPORT_APIARY__
 import { pageMiddleware } from './src/middlewares/page.js';
 import { createApplication, type ApplicationMiddleware } from './src/routes/paths.js';
 
 const env = loadEnvironment();
 const log = createLogger(env.LOG_LEVEL);
-__INIT_ALPS__;
+__INIT_ALPS__
 
 const middleware: ApplicationMiddleware[] = [
   ...pageMiddleware(log, env).map((handler) => ({ handler })),
@@ -16,6 +16,7 @@ const middleware: ApplicationMiddleware[] = [
 ];
 
 const app = createApplication({ middleware });
+__MOUNT_APIARY__
 const handle = serve({
   app,
   hostname: env.HOST,
@@ -27,6 +28,7 @@ const handle = serve({
 });
 
 await handle.ready;
+__INIT_APIARY__
 log.info('server.started', { url: handle.url, environment: env.NODE_ENV });
 
 let closing = false;
@@ -39,7 +41,8 @@ async function shutdown(signal: string) {
   log.info('server.stopping', { signal });
 
   await handle.close();
-  __CLOSE_ALPS__;
+  __CLOSE_ALPS__
+  __CLOSE_APIARY__
 
   log.info('server.stopped');
 }
