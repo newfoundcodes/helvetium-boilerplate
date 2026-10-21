@@ -32,9 +32,8 @@ const ctx = await context({
   platform: 'browser',
   target: ['es2022'],
   sourcemap: true,
-  jsx: 'transform',
-  jsxFactory: 'h',
-  jsxFragment: 'Fragment',
+  jsx: 'automatic',
+  jsxImportSource: '@newfoundcodes/helvetium-dom',
 });
 await ctx.watch();
 
