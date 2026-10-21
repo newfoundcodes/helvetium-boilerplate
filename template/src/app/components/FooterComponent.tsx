@@ -1,5 +1,3 @@
-import { h } from '@newfoundcodes/helvetium-dom';
-
 export function FooterComponent() {
   return (
     <footer class="max-w-[1100px] w-full px-4 mx-auto py-8 border-t border-neutral-200 text-neutral-500">
