@@ -8,8 +8,8 @@ import { h } from '@newfoundcodes/helvetium-dom';
 import { NotFoundPage } from '../app/NotFoundPage.js';
 import { pageRoutes } from '../app/routes.js';
 import { Index } from '../index.js';
-__IMPORT_MCP__;
-__ALPS_IMPORTS__;
+__IMPORT_MCP__
+__ALPS_IMPORTS__
 
 const serverPageRoutes = pageRoutes as unknown as readonly HelvetiumRouteDefinition[];
 
@@ -29,7 +29,7 @@ export function createApplication(options: { middleware?: ApplicationMiddleware[
     }
   }
 
-  __ALPS_ROUTES__;
+  __ALPS_ROUTES__
 
   app.get(
     '/openapi.json',
@@ -41,7 +41,7 @@ export function createApplication(options: { middleware?: ApplicationMiddleware[
     }),
   );
 
-  __INIT_MCP__;
+  __INIT_MCP__
 
   let clientEntry = '/assets/client.js';
   try {
