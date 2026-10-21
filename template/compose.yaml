@@ -6,6 +6,8 @@ services:
       - '__PORT__:__PORT__'
     volumes:
       - app-data:/app/storage
+__APIARY_COMPOSE_VOLUME__
     restart: unless-stopped
 volumes:
   app-data:
+__APIARY_COMPOSE_DECLARATION__
