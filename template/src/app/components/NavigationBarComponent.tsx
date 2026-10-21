@@ -1,4 +1,4 @@
-import { Anchor, h } from '@newfoundcodes/helvetium-dom';
+import { Anchor } from '@newfoundcodes/helvetium-dom';
 
 export function NavigationBarComponent() {
   return (
