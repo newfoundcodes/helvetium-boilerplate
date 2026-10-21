@@ -1,6 +1,4 @@
-import type { McpTool } from '@newfoundcodes/helvetium-mcp';
-
-export function pingTool(): McpTool {
+export function pingTool() {
   return {
     description: 'Ping tool to check server status',
     inputSchema: { type: 'object', properties: {}, additionalProperties: true },
