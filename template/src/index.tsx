@@ -1,4 +1,4 @@
-import { h, type VNodeChild } from '@newfoundcodes/helvetium-dom';
+import type { VNodeChild } from '@newfoundcodes/helvetium-dom';
 import { FooterComponent } from './app/components/FooterComponent.js';
 import { NavigationBarComponent } from './app/components/NavigationBarComponent.js';
 
