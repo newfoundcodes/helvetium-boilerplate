@@ -26,13 +26,13 @@ export type { BoilerplateManifest } from './interfaces/manifest.js';
 import type { BoilerplateManifest } from './interfaces/manifest.js';
 
 export const manifest: BoilerplateManifest = Object.freeze({
-  version: '0.1.0',
+  version: '0.1.6',
   framework: {
-    boot: '0.1.2',
-    dom: '0.1.2',
-    alps: '0.1.1',
-    apiary: '0.1.1',
-    mcp: '0.1.1',
+    boot: '0.1.3',
+    dom: '0.1.4',
+    alps: '0.1.2',
+    apiary: '0.1.2',
+    mcp: '0.1.2',
   },
   defaultPort: 3000,
   directories: [
