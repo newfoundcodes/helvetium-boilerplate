@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "clean": "rm -rf dist public/assets/*.js public/assets/*.js.map public/assets/app.css public/assets/manifest.json coverage",
+    "clean": "node scripts/clean.mjs",
     "build:server": "tsc -p tsconfig.server.json",
     "build:css": "tailwindcss -i ./src/app.css -o ./public/assets/app.css --minify",
     "build:web": "npm run build:css && node scripts/build-web.mjs",
@@ -16,14 +16,21 @@
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     __ALPS_SCRIPTS__
-    "test": "node --test --import tsx tests/*.test.ts",
-    "test:coverage": "node --experimental-test-coverage --test --import tsx tests/*.test.ts",
-    "check": "npm run typecheck && npm test && npm run build"
+    __APIARY_SCRIPTS__
+    __PLAYWRIGHT_SCRIPTS__
+    __PRETTIER_SCRIPTS__
+    __ESLINT_SCRIPTS__
+    "test": "node scripts/test.mjs",
+    "test:coverage": "node scripts/test.mjs --coverage",
+    "check": "__QUALITY_CHECKS__"
   },
   "dependencies": {
     __DEPENDENCIES__
   },
   "devDependencies": {
+    __PLAYWRIGHT_DEPENDENCY__
+    __PRETTIER_DEPENDENCY__
+    __ESLINT_DEPENDENCIES__
     "@types/node": "^22.20.1",
     "esbuild": "^0.28.2",
     "tailwindcss": "^3.4.17",
