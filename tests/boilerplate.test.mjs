@@ -34,11 +34,11 @@ test('03 rejects invalid npm package names', () =>
 
 test('04 manifest pins the coordinated Helvetium releases', () =>
   assert.deepEqual(manifest.framework, {
-    boot: '0.1.2',
-    dom: '0.1.2',
-    alps: '0.1.1',
-    apiary: '0.1.1',
-    mcp: '0.1.1',
+    boot: '0.1.3',
+    dom: '0.1.4',
+    alps: '0.1.2',
+    apiary: '0.1.2',
+    mcp: '0.1.2',
   }));
 
 test('05 manifest default port is 3000', () => assert.equal(manifest.defaultPort, 3000));
@@ -320,11 +320,11 @@ test('14 generated package declares the supported core packages', async () => {
   const { base, target } = await generated();
   const p = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'));
 
-  assert.equal(p.dependencies['@newfoundcodes/helvetium-boot'], `^${manifest.framework.boot}`);
-  assert.equal(p.dependencies['@newfoundcodes/helvetium-dom'], `^${manifest.framework.dom}`);
-  assert.equal(p.dependencies['@newfoundcodes/helvetium-alps'], `^${manifest.framework.alps}`);
-  assert.equal(p.dependencies['@newfoundcodes/helvetium-apiary'], `^${manifest.framework.apiary}`);
-  assert.equal(p.dependencies['@newfoundcodes/helvetium-mcp'], `^${manifest.framework.mcp}`);
+  assert.equal(p.dependencies['@newfoundcodes/helvetium-boot'], `>=${manifest.framework.boot}`);
+  assert.equal(p.dependencies['@newfoundcodes/helvetium-dom'], `>=${manifest.framework.dom}`);
+  assert.equal(p.dependencies['@newfoundcodes/helvetium-alps'], `>=${manifest.framework.alps}`);
+  assert.equal(p.dependencies['@newfoundcodes/helvetium-apiary'], `>=${manifest.framework.apiary}`);
+  assert.equal(p.dependencies['@newfoundcodes/helvetium-mcp'], `>=${manifest.framework.mcp}`);
 
   await rm(base, { recursive: true, force: true });
 });
