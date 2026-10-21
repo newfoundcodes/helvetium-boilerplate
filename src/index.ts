@@ -36,6 +36,7 @@ const TOKEN_RE = /__(PROJECT_NAME|PACKAGE_NAME|PORT)__/g;
 const RENAMES: Record<string, string> = {
   _gitignore: '.gitignore',
   _dockerignore: '.dockerignore',
+  _prettierignore: '.prettierignore',
   '_env.example': '.env.example',
   '_env.test': '.env.test',
   _github: ' .github',
@@ -121,18 +122,58 @@ function render(value: string, plan: ProjectPlan): string {
       ].join(',\n    ') + ','
     : '';
 
-  // Clean up server.ts and paths.ts tokens
+  const apiaryScripts = plan.useApiary ? '"workers": "node --import tsx scripts/workers.mjs",' : '';
+  const playwrightScripts = plan.usePlaywright
+    ? '"test:e2e": "npm run build && playwright test",'
+    : '';
+  const playwrightDependency = plan.usePlaywright ? '"@playwright/test": "^1.55.0",' : '';
+  const playwrightCI = plan.usePlaywright
+    ? '      - run: npx playwright install --with-deps chromium\n      - run: npm run test:e2e'
+    : '';
+  const prettierScripts = plan.usePrettier
+    ? '"format": "prettier --write .",\n    "format:check": "prettier --check .",'
+    : '';
+  const eslintScripts = plan.useEslint
+    ? '"lint": "eslint .",\n    "lint:fix": "eslint . --fix",'
+    : '';
+  const prettierDependency = plan.usePrettier ? '"prettier": "^3.9.6",' : '';
+  const eslintDependencies = plan.useEslint
+    ? '"@eslint/js": "^10.0.1",\n    "@stylistic/eslint-plugin": "^5.10.0",\n    "eslint": "^10.10.0",\n    "typescript-eslint": "^8.69.0",'
+    : '';
+  const qualityChecks = [
+    ...(plan.usePrettier ? ['npm run format:check'] : []),
+    ...(plan.useEslint ? ['npm run lint'] : []),
+    'npm run typecheck',
+    'npm test',
+    'npm run build',
+  ].join(' && ');
+
   const replacementMap: Record<string, string> = {
     __DEPENDENCIES__: dependencies.join(',\n    '),
     __ALPS_SCRIPTS__: migrationScripts,
+    __APIARY_SCRIPTS__: apiaryScripts,
+    __PLAYWRIGHT_SCRIPTS__: playwrightScripts,
+    __PLAYWRIGHT_DEPENDENCY__: playwrightDependency,
+    __PRETTIER_SCRIPTS__: prettierScripts,
+    __ESLINT_SCRIPTS__: eslintScripts,
+    __PRETTIER_DEPENDENCY__: prettierDependency,
+    __ESLINT_DEPENDENCIES__: eslintDependencies,
+    __QUALITY_CHECKS__: qualityChecks,
     __IMPORT_ALPS__: plan.useAlps
       ? `import { closeDatabase, createDatabase } from './src/database/index.js';`
       : '',
     __INIT_ALPS__: plan.useAlps ? `createDatabase(env);` : '',
     __CLOSE_ALPS__: plan.useAlps ? `await closeDatabase();` : '',
-    __IMPORT_APIARY__: plan.useApiary ? `import './background/index.js';` : '',
+    __IMPORT_APIARY__: plan.useApiary
+      ? `import { mountApiary } from '@newfoundcodes/helvetium-apiary/boot';\nimport { apiary, startWorkers, stopWorkers } from './background/index.js';`
+      : '',
+    __MOUNT_APIARY__: plan.useApiary
+      ? `mountApiary(app, '/internal/apiary', apiary, {\n  authorize: env.APIARY_ADMIN_TOKEN\n    ? (request) => request.headers.get('authorization') === \`Bearer \${env.APIARY_ADMIN_TOKEN}\`\n    : undefined,\n});`
+      : '',
+    __INIT_APIARY__: plan.useApiary ? 'await startWorkers();' : '',
+    __CLOSE_APIARY__: plan.useApiary ? 'await stopWorkers();' : '',
     __IMPORT_MCP__: plan.useMcp
-      ? `import { createMCPServer, mountMCP } from '@newfoundcodes/helvetium-mcp';\nimport pingTool from './mcp/ping.js';`
+      ? `import { createMCPServer, mountMCP } from '@newfoundcodes/helvetium-mcp';\nimport { pingTool } from './mcp/ping.js';`
       : '',
     __INIT_MCP__: plan.useMcp
       ? `\n\n  const mcp = createMCPServer({ name: '${plan.packageName}-mcp', version: '0.1.0' });\n  mcp.tool('ping', pingTool());\n  mountMCP(app, mcp, { path: '/mcp' });`
@@ -141,7 +182,7 @@ function render(value: string, plan: ProjectPlan): string {
       ? "import { healthHandler } from './handlers/health.js';\nimport { createUser, listUsers, showUser } from './handlers/users.js';"
       : '',
     __ALPS_ROUTES__: plan.useAlps
-      ? `  app.get(
+      ? `app.get(
     '/api/health',
     describeRoute({
       operationId: 'health',
@@ -190,18 +231,101 @@ function render(value: string, plan: ProjectPlan): string {
     __ALPS_README_FILES__: plan.useAlps
       ? '- `src/database/`: Alps configuration, table schemas, repositories.\n- `migrations/`: ordered Alps migrations.\n- `scripts/migrate.ts`: migration runner.\n'
       : '',
+    __APIARY_README_FILES__: plan.useApiary
+      ? '- `background/`: Apiary job definitions and worker runtime.\n- `scripts/workers.mjs`: worker control entry point.\n'
+      : '',
     __ALPS_README_COMMANDS__: plan.useAlps
       ? ', `migrate`, `migrate:down`, and `migrate:status`'
       : '',
+    __APIARY_README_COMMANDS__: plan.useApiary
+      ? ', and `workers` (`list`, `jobs`, `trigger`, `run`, `work`, `cancel`, `retry`)'
+      : '',
+    __APIARY_README_SECTION__: plan.useApiary
+      ? [
+          'When Apiary is enabled, use `helvet worker` from the project root:',
+          '',
+          '```bash',
+          'helvet worker list',
+          'helvet worker trigger example \'{"id":"manual"}\'',
+          'helvet worker run example \'{"id":"offline"}\'',
+          'helvet worker jobs',
+          '```',
+          '',
+          "`trigger` uses the running server's internal Apiary endpoint when available and falls back to the local durable queue. `run` executes one job offline, while `work` starts a local worker process. Set `HELVETIUM_APIARY_URL` when the server is not using the default address.",
+          '',
+        ].join('\n')
+      : '',
     __ALPS_DOCKER_COPY__: plan.useAlps ? 'COPY --from=build /app/migrations ./migrations' : '',
+    __APIARY_COMPOSE_VOLUME__: plan.useApiary ? '      - apiary-data:/app/var' : '',
+    __APIARY_COMPOSE_DECLARATION__: plan.useApiary ? '  apiary-data:' : '',
+    __PLAYWRIGHT_CI__: playwrightCI,
+    __PLAYWRIGHT_README_FILES__: plan.usePlaywright
+      ? '- `playwright.config.ts`: Playwright browser-test configuration.\n- `e2e/`: browser end-to-end tests.\n'
+      : '',
+    __PLAYWRIGHT_README_COMMANDS__: plan.usePlaywright ? ', `test:e2e`' : '',
+    __PLAYWRIGHT_README_SECTION__: plan.usePlaywright
+      ? [
+          '### Browser tests',
+          '',
+          'Install the Chromium browser once, then run the generated Playwright tests:',
+          '',
+          '```bash',
+          'npx playwright install chromium',
+          'npm run test:e2e',
+          '```',
+          '',
+        ].join('\n')
+      : '',
+    __PRETTIER_README_FILES__: plan.usePrettier
+      ? '- `prettier.config.mjs`: Prettier formatting configuration.\n'
+      : '',
+    __ESLINT_README_FILES__: plan.useEslint
+      ? '- `eslint.config.mjs`: ESLint and stylistic lint configuration.\n'
+      : '',
+    __PRETTIER_README_COMMANDS__: plan.usePrettier ? ', `format`, and `format:check`' : '',
+    __ESLINT_README_COMMANDS__: plan.useEslint ? ', `lint`, and `lint:fix`' : '',
+    __PRETTIER_README_SECTION__: plan.usePrettier
+      ? [
+          '### Formatting',
+          '',
+          'Run Prettier across the project or verify formatting without changing files:',
+          '',
+          '```bash',
+          'npm run format',
+          'npm run format:check',
+          '```',
+          '',
+        ].join('\n')
+      : '',
+    __ESLINT_README_SECTION__: plan.useEslint
+      ? [
+          '### Linting',
+          '',
+          'Run ESLint with the generated TypeScript and stylistic rules:',
+          '',
+          '```bash',
+          'npm run lint',
+          'npm run lint:fix',
+          '```',
+          '',
+        ].join('\n')
+      : '',
   };
 
   for (const [token, replacement] of Object.entries(replacementMap)) {
+    if (replacement === '') {
+      const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      rendered = rendered.replace(new RegExp(`^[ \\t]*${escapedToken}[ \\t]*\\r?\\n`, 'gm'), '');
+    }
+
     rendered = rendered.split(token).join(replacement);
   }
 
-  // Remove empty lines created by replacements, but only if they consist of exactly the token line
-  return rendered.replace(/^[ \t]*\n/gm, '\n');
+  return rendered
+    .replace(/^[ \t]*;[ \t]*\r?\n/gm, '')
+    .replace(/^[ \t]*\n/gm, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n+$/, '\n');
 }
 
 export async function planProject(options: CreateProjectOptions): Promise<ProjectPlan> {
@@ -222,6 +346,9 @@ export async function planProject(options: CreateProjectOptions): Promise<Projec
   const useAlps = options.useAlps ?? true;
   const useApiary = options.useApiary ?? true;
   const useMcp = options.useMcp ?? true;
+  const usePlaywright = options.usePlaywright ?? false;
+  const usePrettier = options.usePrettier ?? false;
+  const useEslint = options.useEslint ?? false;
 
   if (!useAlps) {
     files = files.filter(
@@ -235,11 +362,23 @@ export async function planProject(options: CreateProjectOptions): Promise<Projec
   }
 
   if (!useApiary) {
-    files = files.filter((f) => !f.startsWith('background/'));
+    files = files.filter((f) => !f.startsWith('background/') && f !== 'scripts/workers.mjs');
   }
 
   if (!useMcp) {
     files = files.filter((f) => !f.startsWith('src/routes/mcp/'));
+  }
+
+  if (!usePlaywright) {
+    files = files.filter((f) => f !== 'playwright.config.ts' && !f.startsWith('e2e/'));
+  }
+
+  if (!usePrettier) {
+    files = files.filter((f) => f !== 'prettier.config.mjs' && f !== '.prettierignore');
+  }
+
+  if (!useEslint) {
+    files = files.filter((f) => f !== 'eslint.config.mjs');
   }
 
   return {
@@ -251,6 +390,9 @@ export async function planProject(options: CreateProjectOptions): Promise<Projec
     useAlps,
     useApiary,
     useMcp,
+    usePlaywright,
+    usePrettier,
+    useEslint,
   };
 }
 
@@ -308,6 +450,21 @@ function installCommand(manager: PackageManager): { cmd: string; args: string[] 
         : { cmd: 'pnpm', args: ['install'] };
 }
 
+function platformExecutable(command: string): string {
+  if (process.platform !== 'win32') {
+    return command;
+  }
+
+  return (
+    {
+      npm: 'npm.cmd',
+      pnpm: 'pnpm.cmd',
+      yarn: 'yarn.cmd',
+      bun: 'bun.exe',
+    }[command] ?? command
+  );
+}
+
 async function runInstall(directory: string, manager: PackageManager): Promise<void> {
   if (!['npm', 'pnpm', 'yarn', 'bun'].includes(manager)) {
     throw new TypeError(`Unsupported package manager: ${String(manager)}`);
@@ -315,10 +472,9 @@ async function runInstall(directory: string, manager: PackageManager): Promise<v
 
   const c = installCommand(manager);
   await new Promise<void>((resolvePromise, reject) => {
-    const child = spawn(c.cmd, c.args, {
+    const child = spawn(platformExecutable(c.cmd), c.args, {
       cwd: directory,
       stdio: 'inherit',
-      shell: process.platform === 'win32',
     });
 
     child.on('error', reject);
